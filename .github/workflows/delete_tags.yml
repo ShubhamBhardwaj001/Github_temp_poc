@@ -1,1 +1,30 @@
+name: Delete Old Tags
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # Runs every hour
+
+jobs:
+  delete_tags:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Fetch all tags
+        run: git fetch --tags
+
+      - name: Delete tags older than 1 hour
+        run: |
+          current_time=$(date +%s)
+          git for-each-ref --sort=taggerdate --format '%(refname:short) %(taggerdate:raw)' refs/tags | while read tag tag_time
+          do
+            tag_time_epoch=$(echo $tag_time | cut -d' ' -f1)
+            if [ $(($current_time - $tag_time_epoch)) -gt 3600 ]; then
+              git tag -d $tag
+              git push origin :refs/tags/$tag
+              echo "Deleted tag $tag"
+            fi
+          done
 
