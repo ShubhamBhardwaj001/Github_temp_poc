@@ -16,7 +16,7 @@ jobs:
       - name: Fetch all tags
         run: git fetch --tags
 
-      - name: Delete tags older than 24 hours
+      - name: Debugging
         run: |
           current_time=$(date +%s)
           echo "Current Time: $current_time"
@@ -25,6 +25,7 @@ jobs:
           git for-each-ref --sort=taggerdate --format '%(refname:short) %(taggerdate:unix)' refs/tags | while read tag tag_time
           do
             echo "Processing tag: $tag with timestamp: $tag_time"
+            echo "Tag time: $tag_time"
             if [ $tag_time -lt $one_day_ago ]; then
               echo "Deleting tag: $tag"
               git tag -d $tag
@@ -34,3 +35,6 @@ jobs:
               echo "Tag $tag is newer than one day, keeping it."
             fi
           done
+
+      - name: List all tags
+        run: git tag -l
