@@ -1,8 +1,6 @@
 name: Delete Old Tags
 
 on:
-  schedule:
-    - cron: '0 0 * * *'  # Runs once every 24 hours, at midnight UTC
   workflow_dispatch:  # Adds the manual trigger
 
 jobs:
@@ -16,16 +14,18 @@ jobs:
       - name: Fetch all tags
         run: git fetch --tags
 
-      - name: Debugging
+      - name: Delete tags older than 24 hours
         run: |
           current_time=$(date +%s)
-          echo "Current Time: $current_time"
+          current_time_human=$(date -d @$current_time "+%Y-%m-%d %H:%M:%S")
+          echo "Current Time: $current_time_human"
           one_day_ago=$(($current_time - 86400))  # 86400 seconds in 24 hours
-          echo "One Day Ago: $one_day_ago"
+          one_day_ago_human=$(date -d @$one_day_ago "+%Y-%m-%d %H:%M:%S")
+          echo "One Day Ago: $one_day_ago_human"
           git for-each-ref --sort=taggerdate --format '%(refname:short) %(taggerdate:unix)' refs/tags | while read tag tag_time
           do
-            echo "Processing tag: $tag with timestamp: $tag_time"
-            echo "Tag time: $tag_time"
+            tag_time_human=$(date -d @$tag_time "+%Y-%m-%d %H:%M:%S")
+            echo "Processing tag: $tag with timestamp: $tag_time_human"
             if [ $tag_time -lt $one_day_ago ]; then
               echo "Deleting tag: $tag"
               git tag -d $tag
@@ -35,6 +35,3 @@ jobs:
               echo "Tag $tag is newer than one day, keeping it."
             fi
           done
-
-      - name: List all tags
-        run: git tag -l
